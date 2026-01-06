@@ -3606,6 +3606,7 @@ CG_DrawTimedMenus
 =================
 */
 void CG_DrawTimedMenus( qboolean *voiceMenuOpen ) {
+#ifdef MISSIONPACK
 	if ( cg.cur_lc->voiceTime && cg.cur_lc->voiceTime >= cg.time && cg.cur_lc->playerNum != cg.cur_lc->currentVoicePlayerNum ) {
 		Menus_OpenByName("voiceMenu");
 		*voiceMenuOpen = qtrue;
@@ -3613,6 +3614,7 @@ void CG_DrawTimedMenus( qboolean *voiceMenuOpen ) {
 		Menus_CloseByName("voiceMenu");
 		*voiceMenuOpen = qfalse;
 	}
+#endif
 }
 #endif
 #ifdef TA_SP

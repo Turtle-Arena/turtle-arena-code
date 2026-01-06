@@ -2794,6 +2794,7 @@ static void UI_Update(const char *name) {
 				trap_Cvar_SetValue( "r_stencilbits", 8 );
 				trap_Cvar_SetValue( "r_picmip", 0 );
 				trap_Cvar_SetValue( "r_mode", 4 );
+				trap_Cvar_Set( "ui_videomode", "800x600" );
 				trap_Cvar_SetValue( "r_texturebits", 32 );
 				trap_Cvar_SetValue( "r_fastSky", 0 );
 				trap_Cvar_SetValue( "r_inGameVideo", 1 );
@@ -2811,6 +2812,7 @@ static void UI_Update(const char *name) {
 				trap_Cvar_Reset( "r_stencilbits" );
 				trap_Cvar_SetValue( "r_picmip", 1 );
 				trap_Cvar_SetValue( "r_mode", 3 );
+				trap_Cvar_Set( "ui_videomode", "640x480" );
 				trap_Cvar_SetValue( "r_texturebits", 0 );
 				trap_Cvar_SetValue( "r_fastSky", 0 );
 				trap_Cvar_SetValue( "r_inGameVideo", 1 );
@@ -2828,6 +2830,7 @@ static void UI_Update(const char *name) {
 				trap_Cvar_Reset( "r_stencilbits" );
 				trap_Cvar_SetValue( "r_picmip", 1 );
 				trap_Cvar_SetValue( "r_mode", 3 );
+				trap_Cvar_Set( "ui_videomode", "640x480" );
 				trap_Cvar_SetValue( "r_texturebits", 0 );
 				trap_Cvar_SetValue( "cg_shadows", 0 );
 				trap_Cvar_SetValue( "r_fastSky", 1 );
@@ -2844,6 +2847,7 @@ static void UI_Update(const char *name) {
 				trap_Cvar_SetValue( "r_depthbits", 16 );
 				trap_Cvar_SetValue( "r_stencilbits", 0 );
 				trap_Cvar_SetValue( "r_mode", 3 );
+				trap_Cvar_Set( "ui_videomode", "640x480" );
 				trap_Cvar_SetValue( "r_picmip", 2 );
 				trap_Cvar_SetValue( "r_texturebits", 16 );
 				trap_Cvar_SetValue( "cg_shadows", 0 );
@@ -4797,6 +4801,8 @@ void UI_Init( qboolean inGameLoad, int maxSplitView ) {
 	UI_InitMemory();
 	BG_InitItemInfo();
 
+	trap_Cvar_Set("ui_videomode", va( "%dx%d", cgs.glconfig.vidWidth, cgs.glconfig.vidHeight ) );
+
   //UI_Load();
 	uiInfo.uiDC.registerShaderNoMip = &trap_R_RegisterShaderNoMip;
 	uiInfo.uiDC.setColor = &trap_R_SetColor;
@@ -5558,6 +5564,7 @@ static cvarTable_t		cvarTable[] = {
 	{ NULL, "fraglimit", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART},
 	{ NULL, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART},
 	{ &ui_serverStatusTimeOut, "ui_serverStatusTimeOut", "7000", CVAR_ARCHIVE},
+	{ NULL, "ui_videomode", "", CVAR_ROM },
 	{ &ui_defaultMaleTeamModel, "default_male_team_model", DEFAULT_TEAM_MODEL_MALE, CVAR_ARCHIVE},
 	{ &ui_defaultFemaleTeamModel, "default_female_team_model", DEFAULT_TEAM_MODEL_FEMALE, CVAR_ARCHIVE},
 	{ &ui_menuFont, "ui_menuFont", "fonts/LiberationSans-Bold.ttf", CVAR_ARCHIVE | CVAR_LATCH},

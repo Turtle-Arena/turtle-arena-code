@@ -52,6 +52,7 @@ enum {
 	ID_CROSSHAIR,
 	ID_CROSSHAIRHEALTH,
 	ID_VIEWBOB,
+	ID_VIEWKICK,
 #endif
 	ID_SIMPLEITEMS,
 	ID_HIGHQUALITYSKY,
@@ -103,6 +104,7 @@ typedef struct {
 	menulist_s			crosshair;
 	menuradiobutton_s	crosshairhealth;
 	menuradiobutton_s	viewbob;
+	menuradiobutton_s	viewkick;
 #endif
 	menuradiobutton_s	simpleitems;
 #ifndef TURTLEARENA
@@ -174,6 +176,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
 	s_preferences.crosshairhealth.curvalue	= trap_Cvar_VariableValue( "cg_crosshairHealth" ) != 0;
 	s_preferences.viewbob.curvalue			= trap_Cvar_VariableValue( "cg_viewbob" ) != 0;
+	s_preferences.viewkick.curvalue			= trap_Cvar_VariableValue( "cg_viewkick" ) != 0;
 #endif
 	s_preferences.simpleitems.curvalue		= trap_Cvar_VariableValue( "cg_simpleItems" ) != 0;
 #ifndef TURTLEARENA
@@ -232,6 +235,10 @@ static void Preferences_Event( void* ptr, int notification ) {
 
 	case ID_VIEWBOB:
 		trap_Cvar_SetValue( "cg_viewbob", s_preferences.viewbob.curvalue );
+		break;
+
+	case ID_VIEWKICK:
+		trap_Cvar_SetValue( "cg_viewkick", s_preferences.viewkick.curvalue );
 		break;
 #endif
 
@@ -446,6 +453,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.viewbob.generic.y	              = y;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.viewkick.generic.type            = MTYPE_RADIOBUTTON;
+	s_preferences.viewkick.generic.name	          = "View Damage Kick:";
+	s_preferences.viewkick.generic.flags	          = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.viewkick.generic.callback        = Preferences_Event;
+	s_preferences.viewkick.generic.id              = ID_VIEWKICK;
+	s_preferences.viewkick.generic.x	              = PREFERENCES_X_POS;
+	s_preferences.viewkick.generic.y	              = y;
+
+	y += BIGCHAR_HEIGHT+2;
 #endif
 	s_preferences.simpleitems.generic.type        = MTYPE_RADIOBUTTON;
 	s_preferences.simpleitems.generic.name	      = "Simple Items:";
@@ -615,6 +631,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshairhealth );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.viewbob );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.viewkick );
 #endif
 	Menu_AddItem( &s_preferences.menu, &s_preferences.simpleitems );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );

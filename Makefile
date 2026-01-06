@@ -6,9 +6,29 @@
 COMPILE_PLATFORM=$(shell uname | sed -e 's/_.*//' | tr '[:upper:]' '[:lower:]' | sed -e 's/\//_/g')
 COMPILE_ARCH=$(shell uname -m | sed -e 's/i.86/x86/' | sed -e 's/^arm.*/arm/')
 
+#arm64 hack!
+ifeq ($(shell uname -m), arm64)
+  COMPILE_ARCH=arm64
+endif
+ifeq ($(shell uname -m), aarch64)
+  COMPILE_ARCH=arm64
+endif
+
 ifeq ($(COMPILE_PLATFORM),sunos)
   # Solaris uname and GNU uname differ
   COMPILE_ARCH=$(shell uname -p | sed -e 's/i.86/x86/')
+endif
+
+ifneq ($(findstring mingw,$(COMPILE_PLATFORM)),)
+  # MSYS2 environments differ from uname
+  ifeq ($(MSYSTEM_CHOST),i686-w64-mingw32)
+    COMPILE_PLATFORM=mingw32
+    COMPILE_ARCH=x86
+  endif
+  ifeq ($(MSYSTEM_CHOST),x86_64-w64-mingw32)
+    COMPILE_PLATFORM=mingw32
+    COMPILE_ARCH=x86_64
+  endif
 endif
 
 ifndef BUILD_GAME_SO
@@ -20,11 +40,17 @@ endif
 ifndef BUILD_BASEGAME
   BUILD_BASEGAME =
 endif
+ifndef USE_BASEGAME_MP_HUD
+  USE_BASEGAME_MP_HUD =
+endif
 ifndef BUILD_MISSIONPACK
   BUILD_MISSIONPACK=0
 endif
 ifndef USE_MISSIONPACK_Q3_UI
   USE_MISSIONPACK_Q3_UI =
+endif
+ifndef USE_MISSIONPACK_MP_HUD
+  USE_MISSIONPACK_MP_HUD = 1
 endif
 ifndef BUILD_FINAL
   BUILD_FINAL      =0
@@ -107,8 +133,13 @@ BUILD_DEFINES += -DTA_GAME_MODELS
 #############################################################################
 -include Makefile.local
 
+# cygwin environment isn't supported but mingw packages can be used if installed
 ifeq ($(COMPILE_PLATFORM),cygwin)
   PLATFORM=mingw32
+endif
+# MSYS2 msys environment is cygwin without mingw packages
+ifeq ($(COMPILE_PLATFORM),msys)
+  $(error MSYS2 MSYS environment is not supported, use MSYS2 MinGW 32-bit or 64-bit instead)
 endif
 
 ifndef PLATFORM
@@ -179,6 +210,10 @@ endif
 
 ifndef BASEGAME_CFLAGS
 BASEGAME_CFLAGS=-DMISSIONPACK
+
+ifeq ($(USE_BASEGAME_MP_HUD), 1)
+BASEGAME_CFLAGS+=-DMISSIONPACK_HUD
+endif
 endif
 
 BASEGAME_CFLAGS+=-DMODDIR=\"$(BASEGAME)\" -DBASETA=\"$(MISSIONPACK)\"
@@ -188,10 +223,10 @@ MISSIONPACK=baseturtlemp
 endif
 
 ifndef MISSIONPACK_CFLAGS
-ifeq ($(USE_MISSIONPACK_Q3_UI), 1)
 MISSIONPACK_CFLAGS=-DMISSIONPACK # -DMISSIONPACK_HARVESTER
-else
-MISSIONPACK_CFLAGS=-DMISSIONPACK -DMISSIONPACK_HUD # -DMISSIONPACK_HARVESTER
+
+ifeq ($(USE_MISSIONPACK_MP_HUD), 1)
+MISSIONPACK_CFLAGS+=-DMISSIONPACK_HUD
 endif
 endif
 
@@ -276,7 +311,7 @@ endif
 
 ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu" "gnu"))
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -pipe -DUSE_ICON -DARCH_STRING=\\\"$(ARCH)\\\"
+    -pipe -DUSE_ICON -fvisibility=hidden -DARCH_STRING=\\\"$(ARCH)\\\"
 
   OPTIMIZEVM = -O3
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
@@ -313,7 +348,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu" "gnu")
   endif
 
   SHLIBEXT=so
-  SHLIBCFLAGS=-fPIC -fvisibility=hidden
+  SHLIBCFLAGS=-fPIC
   SHLIBLDFLAGS=-shared $(LDFLAGS)
 
   THREAD_LIBS=-lpthread
@@ -340,7 +375,34 @@ ifeq ($(PLATFORM),darwin)
 
   # Default minimum Mac OS X version
   ifeq ($(MACOSX_VERSION_MIN),)
-    MACOSX_VERSION_MIN=10.7
+    MACOSX_VERSION_MIN=10.9
+    ifneq ($(findstring $(ARCH),ppc ppc64),)
+      MACOSX_VERSION_MIN=10.5
+    endif
+    ifeq ($(ARCH),x86)
+      MACOSX_VERSION_MIN=10.6
+    endif
+    ifeq ($(ARCH),x86_64)
+      # trying to find default SDK version is hard
+      # macOS 10.15 requires -sdk macosx but 10.11 doesn't support it
+      # macOS 10.6 doesn't have -show-sdk-version
+      DEFAULT_SDK=$(shell xcrun -sdk macosx -show-sdk-version 2> /dev/null)
+      ifeq ($(DEFAULT_SDK),)
+        DEFAULT_SDK=$(shell xcrun -show-sdk-version 2> /dev/null)
+      endif
+      ifeq ($(DEFAULT_SDK),)
+        $(error Error: Unable to determine macOS SDK version.  On macOS 10.6 to 10.8 run: make MACOSX_VERSION_MIN=10.6  On macOS 10.9 or later run: make MACOSX_VERSION_MIN=10.9 );
+      endif
+
+      ifneq ($(findstring $(DEFAULT_SDK),10.6 10.7 10.8),)
+        MACOSX_VERSION_MIN=10.6
+      else
+        MACOSX_VERSION_MIN=10.9
+      endif
+    endif
+    ifeq ($(ARCH),arm64)
+      MACOSX_VERSION_MIN=11.0
+    endif
   endif
 
   MACOSX_MAJOR=$(shell echo $(MACOSX_VERSION_MIN) | cut -d. -f1)
@@ -356,6 +418,11 @@ ifeq ($(PLATFORM),darwin)
   LDFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN)
   BASE_CFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN) \
                  -DMAC_OS_X_VERSION_MIN_REQUIRED=$(MAC_OS_X_VERSION_MIN_REQUIRED)
+
+  MACOSX_ARCH=$(ARCH)
+  ifeq ($(ARCH),x86)
+    MACOSX_ARCH=i386
+  endif
 
   ifeq ($(ARCH),ppc)
     BASE_CFLAGS += -arch ppc
@@ -375,6 +442,10 @@ ifeq ($(PLATFORM),darwin)
     OPTIMIZEVM += -mfpmath=sse
     BASE_CFLAGS += -arch x86_64
   endif
+  ifeq ($(ARCH),arm64)
+    # HAVE_VM_COMPILED=false # TODO: implement compiled vm
+    BASE_CFLAGS += -arch arm64
+  endif
 
   # When compiling on OSX for OSX, we're not cross compiling as far as the
   # Makefile is concerned, as target architecture is specified as a compiler
@@ -384,17 +455,38 @@ ifeq ($(PLATFORM),darwin)
   endif
 
   ifeq ($(CROSS_COMPILING),1)
-    ifeq ($(ARCH),x86_64)
-      CC=x86_64-apple-darwin13-cc
-      RANLIB=x86_64-apple-darwin13-ranlib
-    else
-      ifeq ($(ARCH),x86)
-        CC=i386-apple-darwin13-cc
-        RANLIB=i386-apple-darwin13-ranlib
-      else
-        $(error Architecture $(ARCH) is not supported when cross compiling)
+    # If CC is already set to something generic, we probably want to use
+    # something more specific
+    ifneq ($(findstring $(strip $(CC)),cc gcc),)
+      CC=
+    endif
+
+    ifndef CC
+      ifndef DARWIN
+        # macOS 10.9 SDK
+        DARWIN=13
+        ifneq ($(findstring $(ARCH),ppc ppc64),)
+          # macOS 10.5 SDK, though as of writing osxcross doesn't support ppc/ppc64
+          DARWIN=9
+        endif
+        ifeq ($(ARCH),arm64)
+          # macOS 11.3 SDK
+          DARWIN=20.4
+        endif
+      endif
+
+      CC=$(MACOSX_ARCH)-apple-darwin$(DARWIN)-cc
+      RANLIB=$(MACOSX_ARCH)-apple-darwin$(DARWIN)-ranlib
+      LIPO=$(MACOSX_ARCH)-apple-darwin$(DARWIN)-lipo
+
+      ifeq ($(call bin_path, $(CC)),)
+        $(error Unable to find osxcross $(CC))
       endif
     endif
+  endif
+
+  ifndef LIPO
+    LIPO=lipo
   endif
 
   BASE_CFLAGS += -fno-strict-aliasing -fno-common -pipe
@@ -487,7 +579,19 @@ ifdef MINGW
 
   ifeq ($(COMPILE_PLATFORM),cygwin)
     TOOLS_BINEXT=.exe
-    TOOLS_CC=$(CC)
+
+    # Under cygwin the default of using gcc for TOOLS_CC won't work, so
+    # we need to figure out the appropriate compiler to use, based on the
+    # host architecture that we're running under (as tools run on the host)
+    ifeq ($(COMPILE_ARCH),x86_64)
+      TOOLS_MINGW_PREFIXES=x86_64-w64-mingw32 amd64-mingw32msvc
+    endif
+    ifeq ($(COMPILE_ARCH),x86)
+      TOOLS_MINGW_PREFIXES=i686-w64-mingw32 i586-mingw32msvc i686-pc-mingw32
+    endif
+
+    TOOLS_CC=$(firstword $(strip $(foreach TOOLS_MINGW_PREFIX, $(TOOLS_MINGW_PREFIXES), \
+      $(call bin_path, $(TOOLS_MINGW_PREFIX)-gcc))))
   endif
 
   LIBS= -lws2_32 -lwinmm -lpsapi
@@ -506,6 +610,8 @@ else # ifdef MINGW
 #############################################################################
 
 ifeq ($(PLATFORM),freebsd)
+  # Use the default C compiler
+  TOOLS_CC=cc
 
   # flags
   BASE_CFLAGS = \
@@ -712,7 +818,6 @@ endif
 
 ifneq ($(HAVE_VM_COMPILED),true)
   BASE_CFLAGS += -DNO_VM_COMPILED
-  BUILD_GAME_QVM=0
 endif
 
 TARGETS =
@@ -880,12 +985,15 @@ targets: makedirs
 	@echo "  COMPILE_PLATFORM: $(COMPILE_PLATFORM)"
 	@echo "  COMPILE_ARCH: $(COMPILE_ARCH)"
 	@echo "  CC: $(CC)"
-ifeq ($(PLATFORM),mingw32)
+ifdef MINGW
 	@echo "  WINDRES: $(WINDRES)"
 endif
 	@echo ""
 	@echo "  CFLAGS:"
 	$(call print_wrapped, $(CFLAGS) $(OPTIMIZE))
+	@echo ""
+	@echo "  TOOLS_CFLAGS:"
+	$(call print_wrapped, $(TOOLS_CFLAGS))
 	@echo ""
 	@echo "  LDFLAGS:"
 	$(call print_wrapped, $(LDFLAGS))
@@ -913,6 +1021,7 @@ makedirs:
 	@$(MKDIR) $(B)/$(BASEGAME)/botlib
 	@$(MKDIR) $(B)/$(BASEGAME)/game
 	@$(MKDIR) $(B)/$(BASEGAME)/ui
+	@$(MKDIR) $(B)/$(BASEGAME)/mpui
 	@$(MKDIR) $(B)/$(BASEGAME)/qcommon
 	@$(MKDIR) $(B)/$(BASEGAME)/vm
 	@$(MKDIR) $(B)/$(MISSIONPACK)/cgame
@@ -1204,6 +1313,11 @@ Q3CGOBJ = \
   $(B)/$(BASEGAME)/qcommon/q_shared.o \
   $(B)/$(BASEGAME)/qcommon/q_unicode.o
 
+ifeq ($(USE_BASEGAME_MP_HUD), 1)
+Q3CGOBJ += \
+  $(B)/$(BASEGAME)/mpui/ui_shared.o
+endif
+
 Q3CGVMOBJ = $(Q3CGOBJ:%.o=%.asm)
 
 $(B)/$(BASEGAME)/$(VM_PREFIX)cgame_$(SHLIBNAME): $(Q3CGOBJ)
@@ -1304,6 +1418,11 @@ MPCGOBJ += \
   $(B)/$(MISSIONPACK)/q3ui/ui_team.o \
   $(B)/$(MISSIONPACK)/q3ui/ui_teamorders.o \
   $(B)/$(MISSIONPACK)/q3ui/ui_video.o
+
+ifeq ($(USE_MISSIONPACK_MP_HUD), 1)
+MPCGOBJ += \
+  $(B)/$(MISSIONPACK)/ui/ui_shared.o
+endif
 else
 MPCGOBJ += \
   $(B)/$(MISSIONPACK)/ui/ui_main.o \
@@ -1524,6 +1643,9 @@ $(B)/$(BASEGAME)/cgame/%.o: $(CGDIR)/%.c
 $(B)/$(BASEGAME)/ui/%.o: $(Q3UIDIR)/%.c
 	$(DO_CGAME_CC)
 
+$(B)/$(BASEGAME)/mpui/%.o: $(UIDIR)/%.c
+	$(DO_CGAME_CC)
+
 $(B)/$(BASEGAME)/cgame/bg_%.asm: $(GDIR)/bg_%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC)
 
@@ -1531,6 +1653,9 @@ $(B)/$(BASEGAME)/cgame/%.asm: $(CGDIR)/%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC)
 
 $(B)/$(BASEGAME)/ui/%.asm: $(Q3UIDIR)/%.c $(Q3LCC)
+	$(DO_CGAME_Q3LCC)
+
+$(B)/$(BASEGAME)/mpui/%.asm: $(UIDIR)/%.c $(Q3LCC)
 	$(DO_CGAME_Q3LCC)
 
 $(B)/$(MISSIONPACK)/cgame/bg_%.o: $(GDIR)/bg_%.c

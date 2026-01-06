@@ -91,6 +91,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define STAT_MINUS			10	// num frame for '-' stats digit
 
 #define	ICON_SIZE			48
+#undef	CHAR_WIDTH				// ignore define from libc
 #define	CHAR_WIDTH			32
 #define	CHAR_HEIGHT			48
 #define	TEXT_ICON_SPACE		4
@@ -1110,7 +1111,7 @@ typedef struct {
 	int			teamScores[2];
 	score_t		scores[MAX_CLIENTS];
 	clientList_t	readyPlayers;
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 	char			spectatorList[MAX_STRING_CHARS];		// list of names
 	int				spectatorTime;							// last time offset
 	float			spectatorOffset;						// current offset from start
@@ -1387,13 +1388,14 @@ typedef struct {
 	qhandle_t	doublerPowerupModel;
 	qhandle_t	ammoRegenPowerupModel;
 #ifndef TURTLEARENA // POWERS
-	qhandle_t	invulnerabilityPowerupModel;
 	qhandle_t	invulnerabilityImpactModel;
 	qhandle_t	invulnerabilityJuicedModel;
 #endif
 	qhandle_t	medkitUsageModel;
 	qhandle_t	dustPuffShader;
-	qhandle_t	heartShader;
+#ifndef TURTLEARENA // POWERS
+	qhandle_t	invulnerabilityPowerupModel;
+#endif
 #endif
 
 #ifdef TA_DATA // EXP_SCALE
@@ -1610,7 +1612,6 @@ typedef struct {
 	qhandle_t teamLeaderShader;
 	qhandle_t retrieveShader;
 	qhandle_t escortShader;
-	qhandle_t flagShaders[3];
 	sfxHandle_t	countPrepareTeamSound;
 
 #ifndef TURTLEARENA // POWERS
@@ -1619,10 +1620,16 @@ typedef struct {
 	sfxHandle_t guardSound;
 	sfxHandle_t scoutSound;
 #endif
+#endif
 
+#ifdef MISSIONPACK_HUD
 	qhandle_t cursor;
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
+	qhandle_t heartShader;
+#endif
+#if defined MISSIONPACK || defined MISSIONPACK_HUD
+	qhandle_t flagShaders[3];
 #endif
 
 	sfxHandle_t	regenSound;
@@ -1770,6 +1777,7 @@ extern	vmCvar_t		cg_dedicated;
 
 extern	vmCvar_t		cg_centertime;
 extern	vmCvar_t		cg_viewbob;
+extern	vmCvar_t		cg_viewkick;
 extern	vmCvar_t		cg_runpitch;
 extern	vmCvar_t		cg_runroll;
 extern	vmCvar_t		cg_bobup;
@@ -1972,7 +1980,7 @@ extern	vmCvar_t		cg_thirdPersonSmooth[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_thirdPersonAnalog[MAX_SPLITVIEW];
 #endif
 
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 extern	vmCvar_t		cg_currentSelectedPlayer[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_currentSelectedPlayerName[MAX_SPLITVIEW];
 #endif
@@ -2014,7 +2022,9 @@ void CG_JoystickHatEvent( int localPlayerNum, int hat, int value, unsigned time,
 void CG_EventHandling(int type);
 void CG_RankRunFrame( void );
 score_t *CG_GetSelectedScore( void );
+#ifdef MISSIONPACK_HUD
 void CG_BuildSpectatorString( void );
+#endif
 
 void CG_RemoveNotifyLine( localPlayer_t *player );
 void CG_AddNotifyText( int realTime, qboolean restoredText );
@@ -2223,11 +2233,15 @@ void CG_Draw3DModel(float x, float y, float w, float h, qhandle_t model, cgSkin_
 #ifdef IOQ3ZTM
 void CG_Draw3DHeadModel( int clientNum, float x, float y, float w, float h, vec3_t origin, vec3_t angles );
 #endif
+#ifdef MISSIONPACK
 void CG_CheckOrderPending( int localPlayerNum );
+#endif
 const char *CG_GameTypeString( void );
 qboolean CG_YourTeamHasFlag( void );
 qboolean CG_OtherTeamHasFlag( void );
+#ifdef MISSIONPACK
 qhandle_t CG_StatusHandle(int task);
+#endif
 qboolean CG_AnyScoreboardShowing( void );
 
 

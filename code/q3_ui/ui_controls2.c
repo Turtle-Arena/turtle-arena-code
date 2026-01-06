@@ -89,6 +89,10 @@ typedef struct {
 enum {
 	// bindable actions
 	ID_SHOWSCORES,
+#ifdef MISSIONPACK_HUD
+	ID_SCORESUP,
+	ID_SCORESDOWN,
+#endif
 	ID_USEITEM,
 #ifndef TURTLEARENA // NO_SPEED_KEY
 	ID_SPEED,
@@ -293,6 +297,10 @@ typedef struct
 	menuradiobutton_s	alwaysrun;
 #endif
 	menuaction_s		showscores;
+#ifdef MISSIONPACK_HUD
+	menuaction_s		scoresup;
+	menuaction_s		scoresdown;
+#endif
 #ifndef TA_WEAPSYS_EX
 	menuradiobutton_s	cyclepastgauntlet;
 	menuradiobutton_s	autoswitch;
@@ -359,6 +367,10 @@ static qboolean waitingforkey = qfalse;
 static bind_t g_bindings[] = 
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
+#ifdef MISSIONPACK_HUD
+	{"scoresUp",		"scroll scores up", ID_SCORESUP,	ANIM_IDLE,		K_KP_PGUP,		-1,		-1, -1},
+	{"scoresDown",		"scroll scores down",ID_SCORESDOWN,	ANIM_IDLE,		K_KP_PGDN,		-1,		-1, -1},
+#endif
 #ifdef IOQ3ZTM
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,	K_MOUSE2,	-1, -1},
 #else
@@ -469,6 +481,10 @@ static bind_t g_bindings[] =
 static bind_t g_bindings2[] =
 {
 	MINIBIND(ID_SHOWSCORES, -1, -1),
+#ifdef MISSIONPACK_HUD
+	MINIBIND(ID_SCORESUP, -1, -1),
+	MINIBIND(ID_SCORESDOWN, -1, -1),
+#endif
 	MINIBIND(ID_USEITEM, -1, -1),
 #ifndef TURTLEARENA // ALWAYS_RUN // NO_SPEED_KEY
 	MINIBIND(ID_SPEED, -1, -1),
@@ -547,6 +563,10 @@ static bind_t g_bindings2[] =
 static bind_t g_bindings3[] =
 {
 	MINIBIND(ID_SHOWSCORES, -1, -1),
+#ifdef MISSIONPACK_HUD
+	MINIBIND(ID_SCORESUP, -1, -1),
+	MINIBIND(ID_SCORESDOWN, -1, -1),
+#endif
 	MINIBIND(ID_USEITEM, -1, -1),
 #ifndef TURTLEARENA // ALWAYS_RUN // NO_SPEED_KEY
 	MINIBIND(ID_SPEED, -1, -1),
@@ -625,6 +645,10 @@ static bind_t g_bindings3[] =
 static bind_t g_bindings4[] =
 {
 	MINIBIND(ID_SHOWSCORES, -1, -1),
+#ifdef MISSIONPACK_HUD
+	MINIBIND(ID_SCORESUP, -1, -1),
+	MINIBIND(ID_SCORESDOWN, -1, -1),
+#endif
 	MINIBIND(ID_USEITEM, -1, -1),
 #ifndef TURTLEARENA // ALWAYS_RUN // NO_SPEED_KEY
 	MINIBIND(ID_SPEED, -1, -1),
@@ -785,6 +809,10 @@ static menucommon_s *g_looking_controls[] = {
 
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
+#ifdef MISSIONPACK_HUD
+	(menucommon_s *)&s_controls.scoresup,
+	(menucommon_s *)&s_controls.scoresdown,
+#endif
 #ifndef TA_MISC
 	(menucommon_s *)&s_controls.useitem,
 #endif
@@ -846,6 +874,10 @@ static menucommon_s *g_looking_mini_controls[] = {
 
 static menucommon_s *g_misc_mini_controls[] = {
 	(menucommon_s *)&s_controls.showscores,
+#ifdef MISSIONPACK_HUD
+	(menucommon_s *)&s_controls.scoresup,
+	(menucommon_s *)&s_controls.scoresdown,
+#endif
 #ifndef TA_MISC
 	(menucommon_s *)&s_controls.useitem,
 #endif
@@ -2355,6 +2387,20 @@ static void Controls_MenuInit( int localPlayerNum )
 	s_controls.showscores.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.showscores.generic.id        = ID_SHOWSCORES;
 
+#ifdef MISSIONPACK_HUD
+	s_controls.scoresup.generic.type      = MTYPE_ACTION;
+	s_controls.scoresup.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.scoresup.generic.callback  = Controls_ActionEvent;
+	s_controls.scoresup.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.scoresup.generic.id        = ID_SCORESUP;
+
+	s_controls.scoresdown.generic.type      = MTYPE_ACTION;
+	s_controls.scoresdown.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.scoresdown.generic.callback  = Controls_ActionEvent;
+	s_controls.scoresdown.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.scoresdown.generic.id        = ID_SCORESDOWN;
+#endif
+
 	s_controls.invertmouse.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.invertmouse.generic.flags	 = QMF_SMALLFONT;
 	s_controls.invertmouse.generic.x	     = SCREEN_WIDTH/2;
@@ -2626,6 +2672,10 @@ static void Controls_MenuInit( int localPlayerNum )
 #endif
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
+#ifdef MISSIONPACK_HUD
+	Menu_AddItem( &s_controls.menu, &s_controls.scoresup );
+	Menu_AddItem( &s_controls.menu, &s_controls.scoresdown );
+#endif
 #ifdef TA_MISC // DROP_FLAG
 	Menu_AddItem( &s_controls.menu, &s_controls.dropflag );
 #endif

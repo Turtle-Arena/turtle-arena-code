@@ -167,6 +167,7 @@ vmCvar_t	cg_dedicated;
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
 vmCvar_t	cg_viewbob;
+vmCvar_t	cg_viewkick;
 vmCvar_t	cg_runpitch;
 vmCvar_t	cg_runroll;
 vmCvar_t	cg_bobup;
@@ -374,7 +375,7 @@ vmCvar_t	cg_thirdPersonSmooth[MAX_SPLITVIEW];
 vmCvar_t	cg_thirdPersonAnalog[MAX_SPLITVIEW];
 #endif
 
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 vmCvar_t	cg_currentSelectedPlayer[MAX_SPLITVIEW];
 vmCvar_t	cg_currentSelectedPlayerName[MAX_SPLITVIEW];
 #endif
@@ -471,6 +472,7 @@ static cvarTable_t cgameCvarTable[] = {
 	{ &cg_gun_z, "cg_gunZ", "0", CVAR_CHEAT, RANGE_ALL },
 	{ &cg_centertime, "cg_centertime", "3", CVAR_CHEAT, RANGE_ALL },
 	{ &cg_viewbob, "cg_viewbob", "1", CVAR_ARCHIVE, RANGE_BOOL },
+	{ &cg_viewkick, "cg_viewkick", "1", CVAR_ARCHIVE, RANGE_BOOL },
 	{ &cg_runpitch, "cg_runpitch", "0.002", CVAR_ARCHIVE, RANGE_ALL },
 	{ &cg_runroll, "cg_runroll", "0.005", CVAR_ARCHIVE, RANGE_ALL  },
 	{ &cg_bobup , "cg_bobup", "0.005", CVAR_CHEAT, RANGE_ALL },
@@ -692,7 +694,7 @@ static userCvarTable_t userCvarTable[] = {
 	{ cg_thirdPersonAnalog, "cg_thirdPersonAnalog", "0", 0, RANGE_BOOL },
 #endif
 
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 	{ cg_currentSelectedPlayer, "cg_currentSelectedPlayer", "0", CVAR_ARCHIVE, RANGE_ALL },
 	{ cg_currentSelectedPlayerName, "cg_currentSelectedPlayerName", "", CVAR_ARCHIVE, RANGE_ALL }
 #endif
@@ -2046,12 +2048,13 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.doublerPowerupModel = trap_R_RegisterModel( "models/powerups/doubler_player.md3" );
 	cgs.media.ammoRegenPowerupModel = trap_R_RegisterModel( "models/powerups/ammo_player.md3" );
 #ifndef TURTLEARENA // POWERS
-	cgs.media.invulnerabilityPowerupModel = trap_R_RegisterModel( "models/powerups/shield/shield.md3" );
 	cgs.media.invulnerabilityImpactModel = trap_R_RegisterModel( "models/powerups/shield/impact.md3" );
 	cgs.media.invulnerabilityJuicedModel = trap_R_RegisterModel( "models/powerups/shield/juicer.md3" );
 #endif
 	cgs.media.medkitUsageModel = trap_R_RegisterModel( "models/powerups/regen.md3" );
-	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedhealth.tga" );
+#ifndef TURTLEARENA // POWERS
+	cgs.media.invulnerabilityPowerupModel = trap_R_RegisterModel( "models/powerups/shield/shield.md3" );
+#endif
 #endif
 #ifndef TURTLEARENA // AWARDS
 	cgs.media.medalImpressive = trap_R_RegisterShaderNoMip( "medal_impressive" );
@@ -2157,12 +2160,6 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.teamLeaderShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/team_leader.png");
 	cgs.media.retrieveShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/retrieve.png");
 	cgs.media.escortShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/escort.png");
-	cgs.media.cursor = trap_R_RegisterShaderNoMip( "menu/art/3_cursor2" );
-	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor" );
-	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor" );
-	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.png");
-	cgs.media.flagShaders[1] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_capture.png");
-	cgs.media.flagShaders[2] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_missing.png");
 #else
 	cgs.media.patrolShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/patrol.tga");
 	cgs.media.assaultShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/assault.tga");
@@ -2172,20 +2169,38 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.teamLeaderShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/team_leader.tga");
 	cgs.media.retrieveShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/retrieve.tga");
 	cgs.media.escortShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/escort.tga");
+#endif // TURTLEARENA
+#endif
+#ifdef MISSIONPACK_HUD
 	cgs.media.cursor = trap_R_RegisterShaderNoMip( "menu/art/3_cursor2" );
+#ifdef TURTLEARENA
+	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor" );
+	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor" );
+#else
 	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor.tga" );
 	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor.tga" );
+#endif // TURTLEARENA
+	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedhealth.tga" );
+#endif
+#if defined MISSIONPACK || defined MISSIONPACK_HUD
+#ifdef TURTLEARENA
+	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.png");
+	cgs.media.flagShaders[1] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_capture.png");
+	cgs.media.flagShaders[2] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_missing.png");
+#else
 	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.tga");
 	cgs.media.flagShaders[1] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_capture.tga");
 	cgs.media.flagShaders[2] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_missing.tga");
+#endif // TURTLEARENA
 #endif
 
+#ifdef MISSIONPACK
 #ifndef TA_DATA // Don't precache default team models.
 	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer ) {
 		CG_CachePlayerModels( cg_defaultMaleTeamModel.string, cg_defaultMaleTeamHeadModel.string );
 		CG_CachePlayerModels( cg_defaultFemaleTeamModel.string, cg_defaultFemaleTeamHeadModel.string );
 	}
-#endif
+#endif // TA_DATA
 #endif
 
 	CG_ClearParticles ();
@@ -2244,7 +2259,7 @@ void CG_LocalPlayerRemoved(int localPlayerNum) {
 	cg.localPlayers[localPlayerNum].playerNum = -1;
 }
 
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 /*																																			
 =======================
 CG_BuildSpectatorString
@@ -2305,7 +2320,7 @@ static void CG_RegisterPlayers( void ) {
 #endif
 		CG_NewPlayerInfo( i );
 	}
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK_HUD
 	CG_BuildSpectatorString();
 #endif
 }
@@ -2777,11 +2792,15 @@ static const char *CG_FeederItemText(float feederID, int index, int column, qhan
 				}
 			break;
 			case 1:
+#ifdef MISSIONPACK
 				if (team == -1) {
 					return "";
 				} else {
 					*handle = CG_StatusHandle(info->teamTask);
 				}
+#else
+				return "";
+#endif
 		  break;
 			case 2:
 				if ( Com_ClientListContains( &cg.readyPlayers, sp->playerNum ) ) {
@@ -2868,10 +2887,18 @@ static int CG_OwnerDrawWidth(int ownerDraw, float scale) {
 			return CG_Text_Width(CG_GetKillerText(), scale, 0);
 			break;
 	  case CG_RED_NAME:
+#ifdef MISSIONPACK
 			return CG_Text_Width(cg_redTeamName.string, scale, 0);
+#else
+			return CG_Text_Width("Red Team", scale, 0);
+#endif
 			break;
 	  case CG_BLUE_NAME:
+#ifdef MISSIONPACK
 			return CG_Text_Width(cg_blueTeamName.string, scale, 0);
+#else
+			return CG_Text_Width("Blue Team", scale, 0);
+#endif
 			break;
 
 

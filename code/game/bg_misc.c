@@ -1476,13 +1476,13 @@ void BG_AddStringToList( char *list, size_t listSize, int *listLength, char *nam
 			int moveBytes = *listLength - (int)( listptr - list ) + 1;
 
 			memmove( listptr + namelen + 1, listptr, moveBytes );
-			strncpy( listptr, name, namelen + 1 );
+			Q_strncpyz( listptr, name, namelen + 1 );
 			*listLength += namelen + 1;
 			return;
 		}
 	}
 
-	strncpy( listptr, name, namelen + 1 );
+	Q_strncpyz( listptr, name, namelen + 1 );
 	*listLength += namelen + 1;
 }
 
@@ -1835,9 +1835,7 @@ int ReadString(int source, fielddef_t *fd, void *p)
 
 	if (!PC_ExpectTokenType(source, TT_STRING, 0, &token)) return 0;
 	//copy the string
-	strncpy((char *) p, token.string, MAX_STRINGFIELD);
-	//make sure the string is closed with a zero
-	((char *)p)[MAX_STRINGFIELD-1] = '\0';
+	Q_strncpyz((char *) p, token.string, MAX_STRINGFIELD);
 	//
 	return 1;
 } //end of the function ReadString

@@ -1537,7 +1537,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 #ifndef TA_DATA_NEWSOUNDS
 			// ZTM: NOTE: Some of these sounds don't really work with local player on different teams.
 			//     New games might want to replace you/enemy sounds with red/blue.
-			//     See http://github.com/zturtleman/spearmint/wiki/New-Sounds
+			//     See http://github.com/clover-moe/spearmint/wiki/New-Sounds
 #endif
 
 			switch( es->eventParm ) {

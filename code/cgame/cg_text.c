@@ -621,6 +621,7 @@ void Text_Paint_AutoWrapped( float x, float y, const fontInfo_t *font, float sca
 	int numLines;
 	vec4_t newColor;
 	const char *p, *start;
+	int length;
 	float drawX;
 
 	if ( !str || str[0] == '\0' )
@@ -745,8 +746,11 @@ void Text_Paint_AutoWrapped( float x, float y, const fontInfo_t *font, float sca
 	start = wrapped;
 	p = strchr(wrapped, '\n');
 	while (p && *p) {
-		strncpy(buf, start, p-start+1);
-		buf[p-start] = '\0';
+		length = p-start+1;
+		if (length > sizeof(buf)) {
+			length = sizeof(buf);
+		}
+		Q_strncpyz(buf, start, length);
 
 		switch (style & UI_FORMATMASK)
 		{
@@ -779,7 +783,7 @@ void Text_Paint_AutoWrapped( float x, float y, const fontInfo_t *font, float sca
 
 		numLines++;
 
-		start += p - start + 1;
+		start += length;
 		p = strchr(p+1, '\n');
 	}
 }

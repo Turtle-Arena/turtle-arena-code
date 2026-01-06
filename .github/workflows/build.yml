@@ -1,0 +1,74 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libsdl2-dev
+    - name: Compile
+      run: make release
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Linux
+        path: build/*.zip
+  windows-x86:
+    name: Windows (x86)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: mingw32
+        install: git make nasm mingw-w64-i686-gcc zip
+    - name: Compile
+      shell: msys2 {0}
+      run: |
+        make release -j $NUMBER_OF_PROCESSORS
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows-x86
+        path: build/*.zip
+  windows-x86_64:
+    name: Windows (x86_64)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: mingw64
+        install: git make nasm mingw-w64-x86_64-gcc zip
+    - name: Compile
+      shell: msys2 {0}
+      run: |
+        make release -j $NUMBER_OF_PROCESSORS
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows-x86_64
+        path: build/*.zip
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile
+      run: make release
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: macOS
+        path: build/*.zip
