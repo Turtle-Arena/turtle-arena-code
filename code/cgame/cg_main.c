@@ -626,7 +626,7 @@ static cvarTable_t cgameCvarTable[] = {
 	{ &cg_numberFont, "cg_numberFont", "fonts/mplus-1c-bold.ttf", CVAR_ARCHIVE | CVAR_LATCH, RANGE_ALL },
 	{ &cg_numberFontBorder, "cg_numberFontBorder", "4", CVAR_ARCHIVE | CVAR_LATCH, RANGE_FLOAT( 0, 10 ) },
 #else
-	{ &cg_consoleFont, "cg_consoleFont", "fonts/LiberationMono-Bold.ttf", CVAR_ARCHIVE | CVAR_LATCH, RANGE_ALL },
+	{ &cg_consoleFont, "cg_consoleFont", "fonts/LiberationMono-Regular.ttf", CVAR_ARCHIVE | CVAR_LATCH, RANGE_ALL },
 	{ &cg_consoleFontSize, "cg_consoleFontSize", "8", CVAR_ARCHIVE | CVAR_LATCH, RANGE_INT( 4, 24 ) },
 	{ &cg_hudFont, "cg_hudFont", "fonts/LiberationSans-Bold.ttf", CVAR_ARCHIVE | CVAR_LATCH, RANGE_ALL },
 	{ &cg_hudFontBorder, "cg_hudFontBorder", "2", CVAR_ARCHIVE | CVAR_LATCH, RANGE_FLOAT( 0, 10 ) },
@@ -2853,7 +2853,7 @@ static void CG_FeederSelection(float feederID, int index) {
 static float CG_Cvar_Get(const char *cvar) {
 	char buff[128];
 	memset(buff, 0, sizeof(buff));
-	trap_Cvar_VariableStringBuffer(cvar, buff, sizeof(buff));
+	trap_Cvar_LatchedVariableStringBuffer(cvar, buff, sizeof(buff));
 	return atof(buff);
 }
 
@@ -2931,7 +2931,7 @@ void CG_LoadHudMenu( void ) {
 	cgDC.runScript = &CG_RunMenuScript;
 	cgDC.getTeamColor = &CG_GetTeamColor;
 	cgDC.setCVar = trap_Cvar_Set;
-	cgDC.getCVarString = trap_Cvar_VariableStringBuffer;
+	cgDC.getCVarString = trap_Cvar_LatchedVariableStringBuffer;
 	cgDC.getCVarValue = CG_Cvar_Get;
 	cgDC.drawTextWithCursor = &CG_Text_PaintWithCursor;
 	cgDC.setOverstrikeMode = &trap_Key_SetOverstrikeMode;

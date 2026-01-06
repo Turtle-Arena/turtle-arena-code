@@ -2652,7 +2652,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 #endif
 
 	// make sure we aren't looking at cg.cur_lc->predictedPlayerEntity for LG
-	nonPredictedCent = &cg_entities[cent->currentState.playerNum];
+	if ( cent == &cg.cur_lc->predictedPlayerEntity ) {
+		nonPredictedCent = &cg_entities[cent->currentState.playerNum];
+	} else {
+		nonPredictedCent = cent;
+	}
 
 #ifdef TA_WEAPSYS
 	foundModel = qfalse;
@@ -2767,7 +2771,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			VectorCopy( nonPredictedCent->pe.flashOrigin, flash.origin );
 		}
 
-		if ( ( cg.cur_lc->predictedPlayerState.eFlags & EF_FIRING )
+		if ( ( nonPredictedCent->currentState.eFlags & EF_FIRING )
 			&& ( ps || cg.cur_lc->renderingThirdPerson
 					|| cent->currentState.number != cg.cur_lc->predictedPlayerState.playerNum ) ) {
 			// special hack for lightning gun...
@@ -2938,15 +2942,6 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		CG_AddWeaponTrail(cent, &barrel, i, qtrue);
 #endif
 	}
-
-	// if the index of the nonPredictedCent is not the same as the playerNum
-#ifndef IOQ3ZTM // IOQ3BUGFIX: How could this even happen? pointer = array + num; if (pointer - array != num) unused code;
-	// then this is a fake player (like on the single player podiums), so
-	// go ahead and use the cent
-	if( ( nonPredictedCent - cg_entities ) != cent->currentState.playerNum ) {
-		nonPredictedCent = cent;
-	}
-#endif
 
 	// add the flash
 #ifdef TA_WEAPSYS

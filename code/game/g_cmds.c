@@ -1440,9 +1440,7 @@ static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 	// insult someone who just killed you
 	if (ent->enemy && ent->enemy->player && ent->enemy->player->lastkilled_player == ent->s.number) {
 		// i am a dead corpse
-		if (!(ent->enemy->r.svFlags & SVF_BOT)) {
-			G_Voice( ent, ent->enemy, SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
-		}
+		G_Voice( ent, ent->enemy, SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
 		ent->enemy = NULL;
 		return;
 	}
@@ -1453,15 +1451,11 @@ static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 			// who is the person I just killed
 #ifndef TURTLEARENA // WEAPONS // MOD
 			if (who->player->lasthurt_mod == MOD_GAUNTLET) {
-				if (!(who->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLGAUNTLET, qfalse );	// and I killed them with a gauntlet
-				}
+				G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLGAUNTLET, qfalse );	// and I killed them with a gauntlet
 			} else
 #endif
 			{
-				if (!(who->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLINSULT, qfalse );	// and I killed them with something else
-				}
+				G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLINSULT, qfalse );	// and I killed them with something else
 			}
 			ent->player->lastkilled_player = -1;
 			return;
@@ -1474,9 +1468,7 @@ static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 			who = g_entities + i;
 			if (who->player && who != ent && who->player->sess.sessionTeam == ent->player->sess.sessionTeam) {
 				if (who->player->rewardTime > level.time) {
-					if (!(who->r.svFlags & SVF_BOT)) {
-						G_Voice( ent, who, SAY_TELL, VOICECHAT_PRAISE, qfalse );
-					}
+					G_Voice( ent, who, SAY_TELL, VOICECHAT_PRAISE, qfalse );
 					return;
 				}
 			}

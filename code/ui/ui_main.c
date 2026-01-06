@@ -1065,10 +1065,10 @@ static void UI_DrawPlayerModel(rectDef_t *rect) {
   	VectorClear( moveangles );
     UI_PlayerInfo_SetModel( &info, model, head, team);
 #ifdef TA_WEAPSYS
-    UI_PlayerInfo_SetInfo( &info, BG_LegsStandForWeapon(&info.playercfg, info.weapon), BG_TorsoStandForWeapon(info.weapon), viewangles,
+    UI_PlayerInfo_SetInfo( &info, 0, BG_LegsStandForWeapon(&info.playercfg, info.weapon), BG_TorsoStandForWeapon(info.weapon), viewangles,
 			vec3_origin, info.weapon, qfalse );
 #else
-    UI_PlayerInfo_SetInfo( &info, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
+    UI_PlayerInfo_SetInfo( &info, 0, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
 #endif
 //		UI_RegisterPlayerModelname( &info, model, head, team);
     updateModel = qfalse;
@@ -1217,10 +1217,10 @@ static void UI_DrawOpponent(rectDef_t *rect) {
   	VectorClear( moveangles );
     UI_PlayerInfo_SetModel( &info2, model, headmodel, "");
 #ifdef TA_WEAPSYS
-    UI_PlayerInfo_SetInfo( &info2, BG_LegsStandForWeapon(&info2.playercfg, info2.weapon), BG_TorsoStandForWeapon(info2.weapon),
+    UI_PlayerInfo_SetInfo( &info2, 0, BG_LegsStandForWeapon(&info2.playercfg, info2.weapon), BG_TorsoStandForWeapon(info2.weapon),
 			viewangles, vec3_origin, info2.weapon, qfalse );
 #else
-    UI_PlayerInfo_SetInfo( &info2, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
+    UI_PlayerInfo_SetInfo( &info2, 0, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
 #endif
 		UI_RegisterPlayerModelname( &info2, model, headmodel, team);
     updateOpponentModel = qfalse;
@@ -4774,6 +4774,13 @@ static void UI_BuildQ3Model_List( void )
 }
 
 
+static float UI_Cvar_Get(const char *cvar) {
+	char buff[128];
+	memset(buff, 0, sizeof(buff));
+	trap_Cvar_LatchedVariableStringBuffer(cvar, buff, sizeof(buff));
+	return atof(buff);
+}
+
 
 /*
 =================
@@ -4814,8 +4821,8 @@ void UI_Init( qboolean inGameLoad, int maxSplitView ) {
 	uiInfo.uiDC.runScript = &UI_RunMenuScript;
 	uiInfo.uiDC.getTeamColor = &UI_GetTeamColor;
 	uiInfo.uiDC.setCVar = trap_Cvar_Set;
-	uiInfo.uiDC.getCVarString = trap_Cvar_VariableStringBuffer;
-	uiInfo.uiDC.getCVarValue = trap_Cvar_VariableValue;
+	uiInfo.uiDC.getCVarString = trap_Cvar_LatchedVariableStringBuffer;
+	uiInfo.uiDC.getCVarValue = UI_Cvar_Get;
 	uiInfo.uiDC.drawTextWithCursor = &UI_Text_PaintWithCursor;
 	uiInfo.uiDC.setOverstrikeMode = &trap_Key_SetOverstrikeMode;
 	uiInfo.uiDC.getOverstrikeMode = &trap_Key_GetOverstrikeMode;
